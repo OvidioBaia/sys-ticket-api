@@ -2,7 +2,7 @@ const Route = require("../models/routes");
 const City = require("../models/cities");
 const cityService = require("../services/city");
 const Cities = require("../models/cities");
-const { Op } = require("sequelize");
+//const { Op } = require("sequelize");
 
 module.exports = {
   async create(data) {
@@ -42,19 +42,36 @@ module.exports = {
     return routes;
   },
   async listQuery(query) {
+    console.log("eeee");
     console.log('eee',query);
     let routes;
-    if (query?.origem != '' && query?.destino !='') {
+    if (query?.origem != '' && query?.destino !='' && query?.hora != '') {
       console.log("caso 1");
-      routes = await Route.findAll({where:{destiny: query.destino, origem: query.origem }});
+      routes = await Route.findAll({where:{destiny: query.destino, origem: query.origem, arrive_time: query.hora }});
     }
-    if(query?.origem !== '' && query?.destino == ''){
+    if(query?.origem != '' && query?.destino == '' && query?.hora == ''){
       console.log("caso 2");
       routes = await Route.findAll({where:{origem: query.origem }});
     }
-    if(query?.origem == '' && query?.destino != ''){
+    if(query?.origem == '' && query?.destino != '' && query?.hora == ''){
       console.log("caso 3");
       routes = await Route.findAll({where:{destiny: query.destino}});
+    }
+    if(query?.origem == '' && query?.destino == '' && query?.hora != ''){
+      console.log("caso 4");
+      routes = await Route.findAll({where:{arrive_time: query.hora }});
+    }
+    if(query?.origem != '' && query?.destino != '' && query?.hora == ''){
+      console.log("caso 4.1");
+      routes = await Route.findAll({where:{origem: query.origem, destiny: query.destino, }});
+    }
+    if(query?.origem != '' && query?.destino == '' && query?.hora != ''){
+      console.log("caso 5");
+      routes = await Route.findAll({where:{origem: query.origem, arrive_time: query.hora }});
+    }
+    if(query?.origem == '' && query?.destino != '' && query?.hora != ''){
+      console.log("caso 6");
+      routes = await Route.findAll({where:{destiny: query.destino, arrive_time: query.hora }});
     }
     console.log("bbbbb");
     // routes = await Route.findAll();

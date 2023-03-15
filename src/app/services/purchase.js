@@ -35,11 +35,48 @@ module.exports = {
 
   async list() {
     console.log("aaaaa");
-    const purchase = await Purchase.findAll();
+    const purchase = await Route.findAll();
     // console.log("etrtt", routes);
     //const routes = await Route.findAll();
+    return purchase;
+    //return {purchase, count: purchase.length};
+  },
 
-    return {purchase, count: purchase.length};
+  async listQuery(query) {
+    console.log("eeee");
+    console.log(query);
+    let routes;
+    if (query.origem != '' && query.destino !='') {
+      console.log("caso 1");
+      routes = await Route.findAll({where:{destiny: query.destino, origem: query.origem}});
+    }
+    if(query?.origem != '' && query?.destino == ''){
+      console.log("caso 2");
+      routes = await Route.findAll({where:{origem: query.origem }});
+    }
+    if(query?.origem == '' && query?.destino != '' && query?.hora == ''){
+      console.log("caso 3");
+      routes = await Route.findAll({where:{destiny: query.destino}});
+    }
+    if(query?.origem == '' && query?.destino == '' && query?.hora != ''){
+      console.log("caso 4");
+      routes = await Route.findAll({where:{arrive_time: query.hora }});
+    }
+    if(query?.origem != '' && query?.destino != '' && query?.hora == ''){
+      console.log("caso 4.1");
+      routes = await Route.findAll({where:{origem: query.origem, destiny: query.destino, }});
+    }
+    if(query?.origem != '' && query?.destino == '' && query?.hora != ''){
+      console.log("caso 5");
+      routes = await Route.findAll({where:{origem: query.origem }});
+    }
+    if(query?.origem == '' && query?.destino != '' && query?.hora != ''){
+      console.log("caso 6");
+      routes = await Route.findAll({where:{destiny: query.destino }});
+    }
+    console.log("bbbbb");
+
+    return routes;
   },
 
   async findByRouteId(id) {

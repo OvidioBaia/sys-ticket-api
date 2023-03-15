@@ -25,7 +25,6 @@ module.exports = {
     const city = await City.findOne({
       where: { name: nome },
     });
-
     return city;
   },
  

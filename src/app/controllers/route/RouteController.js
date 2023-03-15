@@ -32,40 +32,60 @@ class RouteController {
     return b
   }
   async filter(req, res, next) {
+    
+    console.log(req.query.origem.toUpperCase());
+    console.log(req.query);
+    ///const { hora= ''} = req.query;
+    console.log(req.query.hora == "null"? "s" : "null");
+
     try {
       ///console.log('aaa', req.query);
       var rotas;
-      if (req.query.destino != '' && req.query.origem != '' && req.query.data) {
-        //console.log("1 AA");
-        var dis = await cityService.findOneByName(req.query.destino)
-        var org = await cityService.findOneByName(req.query.origem)
-        //console.log(req.query.data);
-        var d = await service.findByData(req.query.data)
-        //console.log("ee", d);
-        rotas = dis && org ? await service.listQuery({origem: org.id , destino: dis.id}) : []
-      }
-      if (req.query.origem !== '' && req.query.destino == '') {
-       // console.log("2 BB");
+      if (req.query.destino != '' && req.query.origem != '' && req.query.hora != 'null') {
+        console.log("caso 0")
+        var dis = await cityService.findOneByName(req.query.destino.toUpperCase())
+        var org = await cityService.findOneByName(req.query.origem.toUpperCase())
 
-        var org = await cityService.findOneByName(req.query.origem)
-        //console.log(dis);
-        rotas = org ? await service.listQuery({origem: org.id, destino: ''}) : []
+        rotas = dis && org ? await service.listQuery({origem: org.id , destino: dis.id, hora: req.query.hora}) : []
       }
-      if (req.query.origem == '' && req.query.destino !== '') {
-        //console.log("3 CC");
-
-        var org = await cityService.findOneByName(req.query.destino)
-        rotas = org ? await service.listQuery({destino: org.id, origem: ''}) : []
+      if (req.query.origem != '' && req.query.destino == '' && req.query.hora == 'null') {
+        console.log("caso 1")
+        var org = await cityService.findOneByName(req.query.origem.toUpperCase())
+        rotas = org ? await service.listQuery({origem: org.id, destino: '', hora: ''}) : []
       }
-      if (req.query.origem == '' && req.query.destino == '') {
-        //console.log("4 DD");
+      if (req.query.origem == '' && req.query.destino !== '' && req.query.hora == 'null') {
+        console.log("caso 2")
 
+        var org = await cityService.findOneByName(req.query.destino.toUpperCase())
+        rotas = org ? await service.listQuery({destino: org.id, origem: '', hora: ''}) : []
+      }
+      if (req.query.origem == '' && req.query.destino == '' && req.query.hora !='null')  {
+        console.log("caso 3")
+        //var org = await cityService.findOneByName(req.query.destino.toUpperCase())
+        rotas = await service.listQuery({destino: '', origem: '',hora: req.query.hora }) ?? []
+      }
+      if (req.query.origem != '' && req.query.destino != '' && req.query.hora =='null')  {
+        console.log("caso 3.0.2")
+        var dist = await cityService.findOneByName(req.query.destino.toUpperCase())
+        var org = await cityService.findOneByName(req.query.origem.toUpperCase())
+
+        rotas = dist ?  await service.listQuery({destino: dist.id, origem:org.id,hora: '' }) : []
+      }
+      if (req.query.origem != '' && req.query.destino == '' && req.query.hora !='null')  {
+        console.log("caso 3.1")
+        var org = await cityService.findOneByName(req.query.origem.toUpperCase())
+        rotas = await service.listQuery({destino: '', origem: org.id,hora: req.query.hora }) ?? []
+      }
+      if (req.query.origem == '' && req.query.destino != '' && req.query.hora !='null')  {
+        console.log("caso 3.2")
+        var dist = await cityService.findOneByName(req.query.destino.toUpperCase())
+        rotas = dist ?  await service.listQuery({destino: dist.id, origem:'',hora: req.query.hora }) : []
+      }
+      if (req.query.origem == '' && req.query.destino == '' && req.query.hora == 'null') {
+        console.log("caso 4")
         rotas = await service.list();  
       }
-      ///console.log("vazio");
-      
-      // console.log("ffff", a[0].origem);
-      let userAarray = []
+    
       let b = rotas.map(async(re)  =>( {
         ...re.dataValues,
         origemName:( await cityService.findOne(re.origem)).name,
@@ -140,11 +160,17 @@ class RouteController {
           //console.log("vazio");
       
       // console.log("ffff", a[0].origem);
+      const subr = async   (re)  =>  {
+        var ab = await service.findOne(re.router_id)
+        const des = await cityService.findOne(ab.destiny)
+        return des.name;
+      }
       let userAarray = []
-      let b = rotas.map(async(re)  =>( {
+      let b = rotas.map(async(re)  =>({
         ...re.dataValues,
         origemName:( await cityService.findOne(re.origem)).name,
-        destinyName: (await cityService.findOne(re.destiny)).name
+        destinyName: (await cityService.findOne(re.destiny)).name,
+        subrota: re.router_id ?  await subr(re) : null
       })
     )
     ////console.log('ffffff',await Promise.all(b));
@@ -183,9 +209,6 @@ class RouteController {
     
       const deleted =  await service.delete(id);
       const r = await service.findOne(id)
-      await Route.destroy({
-        where: { id: id },
-      });
       console.log(r);
       if (deleted) {
         return res.status(200).json({ res: "Rota excluido com sucesso" });
@@ -196,22 +219,21 @@ class RouteController {
     }
   }
 
-//   async update(req, res, next) {
-//     try {
-//       // duvida posso atulizar os dados do usuario e o ponto 
-//       //ou so a tabela relação de ponto-taxi
-//       const idUsuario_has_ponto = req.params.id;
+  async update(req, res, next) {
+    try {
 
-//       const isUpdate = await services.update(idUsuario_has_ponto, req.body);
+      const idUsuario_has_ponto = req.params.id;
+
+      const isUpdate = await service.update(idUsuario_has_ponto, req.body);
       
-//       if (isUpdate[0] === 1) {
-//         return res.status(200).json({ res: "Usuario_has_ponto atualizado com sucesso" });
-//       }
-//     } catch (error) {
-//       console.log(error);
-//       responseError(res);
-//     }
-//   }
+      if (isUpdate[0] === 1) {
+        return res.status(200).json({ res: "Rota atualizado com sucesso" });
+      }
+    } catch (error) {
+      console.log(error);
+      responseError(res);
+    }
+  }
 
   async findOne(req, res, next) {
     try {

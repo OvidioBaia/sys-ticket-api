@@ -31,6 +31,7 @@ class PurchaseController {
     )
     return b
   }
+
   async index(req, res, next) {
     try {
       const purchase = await service.list();
@@ -54,35 +55,41 @@ class PurchaseController {
 
   async filter(req, res, next) {
     try {
-      const purchase = await service.list();
-      
+      //const purchase = await service.list();
+      console.log("PPPPPP");
+      console.log(req.query);
       var rotas 
       if (req.query.destino != '' && req.query.origem != '') {
-        //console.log("1 AA");
-        var dis = await cityService.findOneByName(req.query.destino)
-        var org = await cityService.findOneByName(req.query.origem)
-        //console.log(req.query.data);
-        var d = await service.findByData(req.query.data)
-        //console.log("ee", d);
+        var dis = await cityService.findOneByName(req.query.destino.toUpperCase())
+        console.log(dis);
+        var org = await cityService.findOneByName(req.query.origem.toUpperCase())
+        console.log(org.id);
         rotas = dis && org ? await service.listQuery({origem: org.id , destino: dis.id}) : []
+        console.log(rotas);
       }
       if (req.query.origem !== '' && req.query.destino == '') {
-       // console.log("2 BB");
-
-        var org = await cityService.findOneByName(req.query.origem)
-        //console.log(dis);
+        var org = await cityService.findOneByName(req.query.origem.toUpperCase())
+        //console.log(org);
+        console.log(org);
+  
+        // let b = rr.map(async(re)  =>({
+        //   ...re.dataValues,
+        //   origemName:( await cityService.findOne(re.origem)).name,
+        //   destinyName: (await cityService.findOne(re.destiny)).name,
+        //   purchaseCount: (await service.findByRouteId(re.id)).length
+        // })
+        // )
         rotas = org ? await service.listQuery({origem: org.id, destino: ''}) : []
       }
       if (req.query.origem == '' && req.query.destino !== '') {
-        //console.log("3 CC");
-
-        var org = await cityService.findOneByName(req.query.destino)
+        console.log('qqqee', req.query.destiino);
+        var org = await cityService.findOneByName(req.query.destino.toUpperCase())
         rotas = org ? await service.listQuery({destino: org.id, origem: ''}) : []
       }
       if (req.query.origem == '' && req.query.destino == '') {
-        //console.log("4 DD");
-
-        rotas = await service.list();  
+        console.log("c 3");
+        const purchase =  await service.list();  
+        rotas =purchase
       }
         
 
@@ -93,9 +100,7 @@ class PurchaseController {
         purchaseCount: (await service.findByRouteId(re.id)).length
       })
     )
-    var f = await Promise.all(b)
-    console.log(f);
-      
+    var f = await Promise.all(b)      
       return await res.status(200).json(f);
     } catch (error) {
       return res.status(500).json({ res: responseErrorMessage.res, error });
